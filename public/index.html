@@ -184,36 +184,24 @@
     </div>
   </header>
 
-  <!-- Mobile Sub-Navigation -->
-  <div class="lg:hidden flex items-center justify-around bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-2 py-2 text-xs font-semibold overflow-x-auto">
-    <button onclick="setActiveTab('home')" class="flex items-center gap-1 text-slate-600 dark:text-slate-400 px-2 py-1 flex-shrink-0">
-      <i data-lucide="home" class="w-3.5 h-3.5"></i>
-      <span>Home</span>
-    </button>
-    <button onclick="setActiveTab('prompts')" class="flex items-center gap-1 text-slate-600 dark:text-slate-400 px-2 py-1 flex-shrink-0">
-      <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-      <span>Prompts</span>
-    </button>
-    <button onclick="setActiveTab('folders')" class="flex items-center gap-1 text-amber-600 dark:text-amber-400 px-2 py-1 flex-shrink-0">
-      <i data-lucide="folder-tree" class="w-3.5 h-3.5"></i>
-      <span>Folders</span>
-    </button>
-    <button onclick="setActiveTab('projects')" class="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 px-2 py-1 flex-shrink-0">
-      <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
-      <span>Projects</span>
-    </button>
-    <button onclick="setActiveTab('favorites')" class="flex items-center gap-1 text-amber-500 px-2 py-1 flex-shrink-0">
-      <i data-lucide="star" class="w-3.5 h-3.5"></i>
-      <span>Starred</span>
-    </button>
-    <button onclick="setActiveTab('tutorials')" class="flex items-center gap-1 text-amber-600 dark:text-amber-400 px-2 py-1 flex-shrink-0">
-      <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-      <span>Tutorials</span>
-    </button>
+  <!-- Mobile Search Bar Strip -->
+  <div class="sm:hidden px-3 pt-3 pb-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs border-b border-slate-200/60 dark:border-slate-800/60">
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <i data-lucide="search" class="w-4 h-4"></i>
+      </div>
+      <input 
+        type="text" 
+        id="search-input-mobile" 
+        oninput="const si = document.getElementById('search-input'); if(si) { si.value = this.value; si.dispatchEvent(new Event('input')); }"
+        placeholder="Search prompts, folders, tags..." 
+        class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder-slate-400 font-medium"
+      >
+    </div>
   </div>
 
   <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-8">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-6 sm:space-y-8 pb-28 lg:pb-12">
 
     <!-- ==================== TAB 1: HOME DASHBOARD ==================== -->
     <div id="view-tab-home" class="space-y-7">
@@ -1510,7 +1498,30 @@
   <!-- Toast Notification Container -->
   <div id="toast-container"></div>
 
+  <!-- ==================== MOBILE BOTTOM APP NAVIGATION ==================== -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+    <button onclick="setActiveTab('home')" id="mob-tab-home" class="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-brand-600 dark:text-brand-400 font-bold transition-all text-[10px]">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span>Home</span>
+    </button>
+    <button onclick="setActiveTab('prompts')" id="mob-tab-prompts" class="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium transition-all text-[10px]">
+      <i data-lucide="layout-grid" class="w-5 h-5"></i>
+      <span>Prompts</span>
+    </button>
+    <button onclick="openAddPromptModal()" class="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-brand-500/40 transform active:scale-90 transition-transform">
+      <i data-lucide="plus" class="w-6 h-6"></i>
+    </button>
+    <button onclick="setActiveTab('folders')" id="mob-tab-folders" class="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium transition-all text-[10px]">
+      <i data-lucide="folder-tree" class="w-5 h-5 text-amber-500"></i>
+      <span>Folders</span>
+    </button>
+    <button onclick="setActiveTab('favorites')" id="mob-tab-favorites" class="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium transition-all text-[10px]">
+      <i data-lucide="star" class="w-5 h-5 text-amber-400"></i>
+      <span>Favorites</span>
+    </button>
+  </nav>
+
   <!-- Main JavaScript Logic -->
-  <script src="/app.js?v=2.7"></script>
+  <script src="/app.js?v=2.8"></script>
 </body>
 </html>
