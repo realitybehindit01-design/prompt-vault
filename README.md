@@ -1,2 +1,41 @@
-# prompt-vault
-Enterprise AI Prompt Engineering Studio, Nested Folders, History Rollback &amp; Mobile APK Package
+# 🚀 PromptVault Pro (پرامپٹ والٹ)
+
+ایک جدید اور مکمل پرامپٹ مینجمنٹ سسٹم (AI Prompt Manager & Experimentation Vault) جو آپ کے تمام AI پرامپٹس کو مستقل طور پر محفوظ، کیٹیگرائز، اور آسانی سے کاپی و ٹیسٹ کرنے کے لیے بنایا گیا ہے۔
+
+---
+
+## 🌟 خصوصیات (Key Features)
+
+- 📝 **بغیر کوڈنگ کے پرامپٹ شامل کریں (Manual Prompt UI)**: عنوان، کیٹیگری، ٹارگٹ AI ماڈل، سسٹم پرامپٹ، مین پرامپٹ، ٹیگز، اور نوٹس شامل کریں۔
+- 📦 **کارڈ باکسز ویو (Card Boxes Grid)**: ہر پرامپٹ کا خوبصورت باکس جس میں ایک کلک پر کاپی بٹن اور پریویو موجود ہے۔
+- 🏷️ **سائیڈبار مینیو اور کیٹیگریز**: تمام کیٹیگریز کے الگ الگ سیکشنز مع کاؤنٹر بیجز۔
+- ⚡ **ویری ایبل پلے گراؤنڈ (Variable Playground)**: اگر پرامپٹ میں `{{topic}}` یا `{{language}}` جیسے متغیرات ہیں تو انہیں فارم میں فل کر کے فوری کاپی کریں۔
+- 🔍 **لائیو انسٹنٹ سرچ (Live Instant Search)**: کی ورڈز، ٹیگز اور ٹیکسٹ کو فوری طور پر تلاش کریں۔
+- 💾 **مستقل ڈیٹا بیس اور بیک اپ (SQLite + JSON Backup)**: آپ کے تمام پرامپٹس آپ کے کمپیوٹر پر محفوظ رہتے ہیں اور 1-کلک میں JSON فائل ڈاؤن لوڈ کر کے بیک اپ رکھ سکتے ہیں۔
+- 🌓 **ڈارک اور لائٹ موڈ (Dark / Light Mode)**: دلکش گلاس مارفزم انٹرفیس۔
+
+---
+
+## 🚀 کیسے چلائیں؟ (How to Run)
+
+### طریقہ 1 (1-Click Run):
+فولڈر میں موجود `run.bat` فائل پر ڈبل کلک کریں۔ یہ سرور شروع کر کے براؤزر میں خود بخود ویب سائٹ کھول دے گا۔
+
+### طریقہ 2 (Terminal / PowerShell):
+```powershell
+cd C:\Users\lenovo\.gemini\antigravity\scratch\prompt-vault
+python server.py
+```
+اس کے بعد براؤزر میں جائیں: `http://127.0.0.1:8000`
+
+---
+
+## 📁 فائل سٹرکچر (File Structure)
+
+- `server.py`: FastAPI REST Backend APIs
+- `database.py`: SQLite Database Handler & Starter Prompts
+- `prompts.db`: ڈیٹا بیس فائل (خود بخود بنتی ہے)
+- `static/index.html`: سنگل پیج ایپلیکیشن
+- `static/app.js`: کلائنٹ سائیڈ انٹرایکٹیوٹی اور فنکشنز
+- `static/style.css`: کسٹم اسٹائلنگ اور اینیمیشنز
+- `run.bat`: ون کلک لانچر
