@@ -9,9 +9,3 @@ for p in [root_dir, cur_dir]:
         sys.path.insert(0, p)
 
 from server import app
-
-try:
-    from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
-except Exception:
-    handler = app
