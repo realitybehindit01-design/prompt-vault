@@ -1471,32 +1471,47 @@ function showDuplicateWarningModal(dupInfo) {
 
 async function executeSavePrompt(promptId, payload) {
   try {
-    let res;
-    if (promptId) {
-      res = await fetch(`${API_BASE}/prompts/${promptId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(r => r.json());
-      showToast('Prompt updated! New version archived.', 'success');
-    } else {
-      res = await fetch(`${API_BASE}/prompts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(r => r.json());
-      showToast('Prompt saved to vault!', 'success');
-    }
+    const url = promptId ? `${API_BASE}/prompts/${promptId}` : `${API_BASE}/prompts`;
+    const method = promptId ? 'PUT' : 'POST';
 
-    if (res.status === 'success') {
+    const response = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const res = await response.json();
+
+    if (response.ok && res.status === 'success') {
+      showToast(promptId ? 'Prompt updated! New version archived.' : 'Prompt saved to vault!', 'success');
       closeModal('modal-prompt-form');
-      loadData();
+      await loadData();
+    } else {
+      showToast(res.detail || res.message || 'Failed to save prompt', 'error');
     }
   } catch (err) {
-    // Offline queue fallback
+    console.warn('Network save failed, saving to local storage:', err);
     state.offlineQueue.push({ type: 'prompt', id: promptId, data: payload });
+    
+    // Save to local state immediately so prompt is never lost
+    if (!promptId) {
+      const localPrompt = {
+        id: 'local_' + Date.now(),
+        ...payload,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        current_version: 1
+      };
+      state.prompts.unshift(localPrompt);
+      if (typeof saveToLocalIndexedDB === 'function') {
+        saveToLocalIndexedDB('prompts', state.prompts);
+      }
+      renderPrompts();
+      renderHomeRecentPrompts();
+    }
+
     updateSyncBadge('offline');
-    showToast('Saved to local storage (Queued for sync)', 'info');
+    showToast('Saved to local vault! (Offline cached)', 'info');
     closeModal('modal-prompt-form');
   }
 }
