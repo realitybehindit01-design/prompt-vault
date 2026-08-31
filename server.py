@@ -470,19 +470,44 @@ def download_apk():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     apk_path = os.path.join(base_dir, "static", "promptvault.apk")
     if not os.path.exists(apk_path):
-        static_dir = os.path.join(base_dir, "static")
-        apk_builder.build_standalone_apk(apk_path, static_dir)
+        tmp_apk = "/tmp/promptvault.apk"
+        if not os.path.exists(tmp_apk):
+            try:
+                static_dir = os.path.join(base_dir, "static")
+                apk_builder.build_standalone_apk(tmp_apk, static_dir)
+            except Exception:
+                pass
+        if os.path.exists(tmp_apk):
+            apk_path = tmp_apk
 
-    return FileResponse(
-        path=apk_path,
-        filename="promptvault-v2.5.apk",
-        media_type="application/vnd.android.package-archive"
-    )
+    if os.path.exists(apk_path):
+        return FileResponse(
+            path=apk_path,
+            filename="promptvault-v2.5.apk",
+            media_type="application/vnd.android.package-archive"
+        )
+    return JSONResponse({"status": "error", "message": "APK generating"}, status_code=202)
 
 # Static Files
-static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-os.makedirs(static_dir, exist_ok=True)
-app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+static_dir = os.path.join(base_dir, "static")
+if not os.path.exists(static_dir):
+    parent_static = os.path.join(os.path.dirname(base_dir), "static")
+    if os.path.exists(parent_static):
+        static_dir = parent_static
+
+@app.get("/")
+def serve_index():
+    index_file = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file, media_type="text/html")
+    return HTMLResponse("<h1>PromptVault Pro Enterprise</h1>")
+
+if os.path.exists(static_dir):
+    try:
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+    except Exception as e:
+        print("[Warning] StaticFiles mount:", e)
 
 if __name__ == "__main__":
     import uvicorn
