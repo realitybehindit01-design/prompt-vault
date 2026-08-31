@@ -476,9 +476,17 @@ def move_prompt(prompt_id: int, folder_id: Optional[int], project_id: Optional[i
     conn = get_db_connection()
     cursor = conn.cursor()
     now = datetime.now().isoformat()
+
+    # If moved to a folder with an associated project, inherit folder's project
+    if folder_id and project_id is None:
+        cursor.execute("SELECT project_id FROM folders WHERE id = ? AND user_id = ?", (folder_id, user_id))
+        f_row = cursor.fetchone()
+        if f_row and f_row["project_id"]:
+            project_id = f_row["project_id"]
+
     cursor.execute("""
     UPDATE prompts 
-    SET folder_id = ?, project_id = COALESCE(?, project_id), updated_at = ?
+    SET folder_id = ?, project_id = ?, updated_at = ?
     WHERE id = ? AND user_id = ?
     """, (folder_id, project_id, now, prompt_id, user_id))
     updated = cursor.rowcount > 0
@@ -706,18 +714,29 @@ def update_folder(folder_id: int, data: Dict[str, Any], user_id: int = 1) -> Opt
     conn = get_db_connection()
     cursor = conn.cursor()
     now = datetime.now().isoformat()
+    
+    name = data.get("name")
+    if name:
+        name = name.strip()
+
+    new_parent = data.get("parent_id")
+    if new_parent == folder_id:
+        new_parent = None
+
     cursor.execute("""
     UPDATE folders
     SET name = COALESCE(?, name),
-        parent_id = ?,
-        project_id = ?,
+        parent_id = CASE WHEN ? = 1 THEN ? ELSE parent_id END,
+        project_id = CASE WHEN ? = 1 THEN ? ELSE project_id END,
         icon = COALESCE(?, icon),
         color = COALESCE(?, color),
         updated_at = ?
     WHERE id = ? AND user_id = ?
     """, (
-        data.get("name"),
-        data.get("parent_id"),
+        name,
+        1 if "parent_id" in data else 0,
+        new_parent,
+        1 if "project_id" in data else 0,
         data.get("project_id"),
         data.get("icon"),
         data.get("color"),
@@ -729,10 +748,31 @@ def update_folder(folder_id: int, data: Dict[str, Any], user_id: int = 1) -> Opt
     conn.close()
     return get_folder_by_id(folder_id, user_id)
 
-def delete_folder(folder_id: int, user_id: int = 1) -> bool:
+def delete_folder(
+    folder_id: int,
+    prompt_action: str = "uncategorize",
+    target_folder_id: Optional[int] = None,
+    user_id: int = 1
+) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE prompts SET folder_id = NULL WHERE folder_id = ? AND user_id = ?", (folder_id, user_id))
+
+    # Handle Contained Prompts based on user choice
+    if prompt_action == "move" and target_folder_id and target_folder_id != folder_id:
+        cursor.execute("UPDATE prompts SET folder_id = ? WHERE folder_id = ? AND user_id = ?", (target_folder_id, folder_id, user_id))
+    elif prompt_action == "delete":
+        cursor.execute("""
+        DELETE FROM prompt_versions 
+        WHERE prompt_id IN (SELECT id FROM prompts WHERE folder_id = ? AND user_id = ?)
+        """, (folder_id, user_id))
+        cursor.execute("DELETE FROM prompts WHERE folder_id = ? AND user_id = ?", (folder_id, user_id))
+    else:
+        # Default: Safely uncategorize / move to Root (Zero Data Loss)
+        cursor.execute("UPDATE prompts SET folder_id = NULL WHERE folder_id = ? AND user_id = ?", (folder_id, user_id))
+
+    # Reparent child subfolders to prevent orphan records
+    cursor.execute("UPDATE folders SET parent_id = NULL WHERE parent_id = ? AND user_id = ?", (folder_id, user_id))
+
     cursor.execute("DELETE FROM folders WHERE id = ? AND user_id = ?", (folder_id, user_id))
     deleted = cursor.rowcount > 0
     conn.commit()
