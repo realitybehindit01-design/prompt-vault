@@ -6,8 +6,8 @@ import json
 from contextlib import asynccontextmanager
 from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, HTTPException, Query, UploadFile, File, Response
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Query, UploadFile, File, Response
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -30,14 +30,20 @@ def extract_variables(text: str) -> List[str]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    database.init_db()
-    # Ensure APK & Mobile Assets are built
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    static_dir = os.path.join(base_dir, "static")
-    apk_builder.generate_mobile_assets(static_dir)
-    apk_out = os.path.join(static_dir, "promptvault.apk")
-    if not os.path.exists(apk_out):
-        apk_builder.build_standalone_apk(apk_out, static_dir)
+    try:
+        database.init_db()
+    except Exception as e:
+        print("[Lifespan Warning] DB init:", e)
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        static_dir = os.path.join(base_dir, "static")
+        if os.access(base_dir, os.W_OK):
+            apk_builder.generate_mobile_assets(static_dir)
+            apk_out = os.path.join(static_dir, "promptvault.apk")
+            if not os.path.exists(apk_out):
+                apk_builder.build_standalone_apk(apk_out, static_dir)
+    except Exception as e:
+        print("[Lifespan Warning] APK build skipped:", e)
     yield
 
 app = FastAPI(title="PromptVault Pro Enterprise API", lifespan=lifespan)
@@ -50,6 +56,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+api = APIRouter()
+
 # ==================== PYDANTIC SCHEMAS ====================
 
 class PromptCreateRequest(BaseModel):
@@ -60,23 +68,23 @@ class PromptCreateRequest(BaseModel):
     ai_model: str = "General"
     system_prompt: Optional[str] = ""
     prompt_text: str = Field(..., min_length=1)
-    variables: Optional[List[str]] = None
+    variables: Optional[List[str]] = []
     tags: Optional[List[str]] = []
     notes: Optional[str] = ""
     is_favorite: Optional[bool] = False
 
 class PromptUpdateRequest(BaseModel):
-    title: str
+    title: Optional[str] = None
     folder_id: Optional[int] = None
     project_id: Optional[int] = None
-    category: str
-    ai_model: str
-    system_prompt: Optional[str] = ""
-    prompt_text: str
+    category: Optional[str] = None
+    ai_model: Optional[str] = None
+    system_prompt: Optional[str] = None
+    prompt_text: Optional[str] = None
     variables: Optional[List[str]] = None
-    tags: Optional[List[str]] = []
-    notes: Optional[str] = ""
-    is_favorite: Optional[bool] = False
+    tags: Optional[List[str]] = None
+    notes: Optional[str] = None
+    is_favorite: Optional[bool] = None
     change_summary: Optional[str] = "Manual update"
 
 class PromptMoveRequest(BaseModel):
@@ -90,33 +98,35 @@ class DuplicateCheckRequest(BaseModel):
 
 class FolderCreateRequest(BaseModel):
     name: str = Field(..., min_length=1)
-    project_id: Optional[int] = None
     parent_id: Optional[int] = None
+    project_id: Optional[int] = None
+    color: Optional[str] = "amber"
     icon: Optional[str] = "folder"
-    color: Optional[str] = "indigo"
+    description: Optional[str] = ""
 
 class FolderUpdateRequest(BaseModel):
     name: Optional[str] = None
-    project_id: Optional[int] = None
     parent_id: Optional[int] = None
-    icon: Optional[str] = None
+    project_id: Optional[int] = None
     color: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+
+class FolderMoveRequest(BaseModel):
+    parent_id: Optional[int] = None
+    project_id: Optional[int] = None
 
 class ProjectCreateRequest(BaseModel):
     name: str = Field(..., min_length=1)
     client: Optional[str] = ""
-    description: Optional[str] = ""
-    category: Optional[str] = "General"
-    icon: Optional[str] = "briefcase"
     color: Optional[str] = "indigo"
+    description: Optional[str] = ""
 
 class ProjectUpdateRequest(BaseModel):
     name: Optional[str] = None
     client: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    icon: Optional[str] = None
     color: Optional[str] = None
+    description: Optional[str] = None
 
 class CategoryCreateRequest(BaseModel):
     name: str = Field(..., min_length=1)
@@ -130,7 +140,7 @@ class SyncPayload(BaseModel):
 
 # ==================== PROMPTS ROUTES ====================
 
-@app.get("/api/prompts")
+@api.get("/prompts")
 def get_prompts(
     category: Optional[str] = Query(None),
     folder_id: Optional[int] = Query(None),
@@ -152,14 +162,14 @@ def get_prompts(
     )
     return {"status": "success", "count": len(prompts), "data": prompts}
 
-@app.get("/api/prompts/{prompt_id}")
+@api.get("/prompts/{prompt_id}")
 def get_prompt(prompt_id: int):
     prompt = database.get_prompt_by_id(prompt_id, user_id=1)
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt not found")
     return {"status": "success", "data": prompt}
 
-@app.post("/api/prompts/check-duplicate")
+@api.post("/prompts/check-duplicate")
 def check_duplicate(req: DuplicateCheckRequest):
     duplicate = database.check_duplicate_prompt(
         title=req.title,
@@ -169,16 +179,20 @@ def check_duplicate(req: DuplicateCheckRequest):
     )
     return {"status": "success", "duplicate": duplicate}
 
-@app.post("/api/prompts")
+@api.post("/prompts")
 def create_prompt(item: PromptCreateRequest):
-    data = item.model_dump()
-    if not data.get("variables"):
-        data["variables"] = extract_variables(data["prompt_text"])
+    try:
+        data = item.model_dump()
+        if not data.get("variables"):
+            data["variables"] = extract_variables(data["prompt_text"])
 
-    created = database.create_prompt(data, user_id=1)
-    return {"status": "success", "data": created}
+        created = database.create_prompt(data, user_id=1)
+        return {"status": "success", "data": created}
+    except Exception as e:
+        print("[Error] create_prompt:", e)
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-@app.put("/api/prompts/{prompt_id}")
+@api.put("/prompts/{prompt_id}")
 def update_prompt(prompt_id: int, item: PromptUpdateRequest):
     existing = database.get_prompt_by_id(prompt_id, user_id=1)
     if not existing:
@@ -192,14 +206,14 @@ def update_prompt(prompt_id: int, item: PromptUpdateRequest):
     updated = database.update_prompt(prompt_id, data, user_id=1, change_summary=change_summary)
     return {"status": "success", "data": updated}
 
-@app.post("/api/prompts/{prompt_id}/duplicate")
+@api.post("/prompts/{prompt_id}/duplicate")
 def duplicate_prompt(prompt_id: int):
     duplicated = database.duplicate_prompt(prompt_id, user_id=1)
     if not duplicated:
         raise HTTPException(status_code=404, detail="Prompt not found")
     return {"status": "success", "data": duplicated}
 
-@app.post("/api/prompts/{prompt_id}/move")
+@api.post("/prompts/{prompt_id}/move")
 def move_prompt(prompt_id: int, req: PromptMoveRequest):
     success = database.move_prompt(prompt_id, folder_id=req.folder_id, project_id=req.project_id, user_id=1)
     if not success:
@@ -207,19 +221,19 @@ def move_prompt(prompt_id: int, req: PromptMoveRequest):
     updated = database.get_prompt_by_id(prompt_id, user_id=1)
     return {"status": "success", "data": updated}
 
-@app.post("/api/prompts/{prompt_id}/use")
+@api.post("/prompts/{prompt_id}/use")
 def use_prompt(prompt_id: int):
     stats = database.record_prompt_usage(prompt_id, user_id=1)
     return {"status": "success", "data": stats}
 
-@app.post("/api/prompts/{prompt_id}/favorite")
+@api.post("/prompts/{prompt_id}/favorite")
 def toggle_favorite(prompt_id: int):
     updated = database.toggle_favorite(prompt_id, user_id=1)
     if not updated:
         raise HTTPException(status_code=404, detail="Prompt not found")
     return {"status": "success", "data": updated}
 
-@app.delete("/api/prompts/{prompt_id}")
+@api.delete("/prompts/{prompt_id}")
 def delete_prompt(prompt_id: int):
     success = database.delete_prompt(prompt_id, user_id=1)
     if not success:
@@ -228,7 +242,7 @@ def delete_prompt(prompt_id: int):
 
 # ==================== VERSION HISTORY ROUTES ====================
 
-@app.get("/api/prompts/{prompt_id}/history")
+@api.get("/prompts/{prompt_id}/history")
 def get_prompt_history(prompt_id: int):
     existing = database.get_prompt_by_id(prompt_id, user_id=1)
     if not existing:
@@ -236,30 +250,26 @@ def get_prompt_history(prompt_id: int):
     history = database.get_prompt_history(prompt_id, user_id=1)
     return {"status": "success", "prompt_id": prompt_id, "count": len(history), "data": history}
 
-@app.post("/api/prompts/{prompt_id}/restore/{version_id}")
+@api.post("/prompts/{prompt_id}/restore/{version_id}")
 def restore_prompt_version(prompt_id: int, version_id: int):
     restored = database.restore_prompt_version(prompt_id, version_id, user_id=1)
     if not restored:
         raise HTTPException(status_code=404, detail="Version or Prompt not found")
     return {"status": "success", "message": f"Successfully restored to version {version_id}", "data": restored}
 
-class FolderMoveRequest(BaseModel):
-    parent_id: Optional[int] = None
-    project_id: Optional[int] = None
-
 # ==================== FOLDERS ROUTES ====================
 
-@app.get("/api/folders")
+@api.get("/folders")
 def get_folders(project_id: Optional[int] = Query(None)):
     folders = database.get_all_folders(user_id=1, project_id=project_id)
     return {"status": "success", "count": len(folders), "data": folders}
 
-@app.post("/api/folders")
+@api.post("/folders")
 def create_folder(item: FolderCreateRequest):
     folder = database.create_folder(item.model_dump(), user_id=1)
     return {"status": "success", "data": folder}
 
-@app.post("/api/folders/{folder_id}/move")
+@api.post("/folders/{folder_id}/move")
 def move_folder(folder_id: int, req: FolderMoveRequest):
     success = database.move_folder(folder_id, parent_id=req.parent_id, project_id=req.project_id, user_id=1)
     if not success:
@@ -267,14 +277,14 @@ def move_folder(folder_id: int, req: FolderMoveRequest):
     updated = database.get_folder_by_id(folder_id, user_id=1)
     return {"status": "success", "data": updated}
 
-@app.put("/api/folders/{folder_id}")
+@api.put("/folders/{folder_id}")
 def update_folder(folder_id: int, item: FolderUpdateRequest):
     updated = database.update_folder(folder_id, item.model_dump(exclude_unset=True), user_id=1)
     if not updated:
         raise HTTPException(status_code=404, detail="Folder not found")
     return {"status": "success", "data": updated}
 
-@app.delete("/api/folders/{folder_id}")
+@api.delete("/folders/{folder_id}")
 def delete_folder(folder_id: int):
     success = database.delete_folder(folder_id, user_id=1)
     if not success:
@@ -283,24 +293,24 @@ def delete_folder(folder_id: int):
 
 # ==================== PROJECTS ROUTES ====================
 
-@app.get("/api/projects")
+@api.get("/projects")
 def get_projects():
     projects = database.get_all_projects(user_id=1)
     return {"status": "success", "count": len(projects), "data": projects}
 
-@app.post("/api/projects")
+@api.post("/projects")
 def create_project(item: ProjectCreateRequest):
     project = database.create_project(item.model_dump(), user_id=1)
     return {"status": "success", "data": project}
 
-@app.put("/api/projects/{project_id}")
+@api.put("/projects/{project_id}")
 def update_project(project_id: int, item: ProjectUpdateRequest):
     updated = database.update_project(project_id, item.model_dump(exclude_unset=True), user_id=1)
     if not updated:
         raise HTTPException(status_code=404, detail="Project not found")
     return {"status": "success", "data": updated}
 
-@app.delete("/api/projects/{project_id}")
+@api.delete("/projects/{project_id}")
 def delete_project(project_id: int):
     success = database.delete_project(project_id, user_id=1)
     if not success:
@@ -309,24 +319,24 @@ def delete_project(project_id: int):
 
 # ==================== CATEGORIES ROUTES ====================
 
-@app.get("/api/categories")
+@api.get("/categories")
 def get_categories():
     categories = database.get_all_categories()
     return {"status": "success", "data": categories}
 
-@app.post("/api/categories")
+@api.post("/categories")
 def create_category(item: CategoryCreateRequest):
     cat = database.add_category(item.name, item.icon or "folder", item.color or "indigo")
     return {"status": "success", "data": cat}
 
-@app.delete("/api/categories/{name}")
+@api.delete("/categories/{name}")
 def remove_category(name: str):
     database.delete_category(name)
     return {"status": "success", "message": f"Category {name} deleted"}
 
 # ==================== STATS & BACKUP ====================
 
-@app.get("/api/stats")
+@api.get("/stats")
 def get_stats():
     prompts = database.get_all_prompts(user_id=1)
     folders = database.get_all_folders(user_id=1)
@@ -355,7 +365,7 @@ def get_stats():
         "models_distribution": models
     }
 
-@app.get("/api/export")
+@api.get("/export")
 def export_backup(
     format: str = Query("json", enum=["json", "csv"]),
     folder_id: Optional[int] = Query(None),
@@ -396,7 +406,7 @@ def export_backup(
         headers={"Content-Disposition": "attachment; filename=promptvault_backup.json"}
     )
 
-@app.post("/api/import")
+@api.post("/import")
 async def import_backup(file: UploadFile = File(...)):
     try:
         content = await file.read()
@@ -406,7 +416,7 @@ async def import_backup(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid backup file format: {str(e)}")
 
-@app.post("/api/import/csv")
+@api.post("/import/csv")
 async def import_csv(file: UploadFile = File(...)):
     try:
         content = await file.read()
@@ -436,9 +446,8 @@ async def import_csv(file: UploadFile = File(...)):
 
 # ==================== SYNC & OFFLINE ENDPOINT ====================
 
-@app.post("/api/sync")
+@api.post("/sync")
 def sync_data(payload: SyncPayload):
-    """Processes offline queued items and returns server state."""
     synced_prompts = 0
     synced_folders = 0
 
@@ -465,7 +474,7 @@ def sync_data(payload: SyncPayload):
 
 # ==================== MOBILE APK DOWNLOAD ====================
 
-@app.get("/download/promptvault.apk")
+@api.get("/download/promptvault.apk")
 def download_apk():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     apk_path = os.path.join(base_dir, "static", "promptvault.apk")
@@ -487,6 +496,10 @@ def download_apk():
             media_type="application/vnd.android.package-archive"
         )
     return JSONResponse({"status": "error", "message": "APK generating"}, status_code=202)
+
+# Include Router with both /api prefix and root prefix
+app.include_router(api, prefix="/api")
+app.include_router(api, prefix="")
 
 # Static Files
 base_dir = os.path.dirname(os.path.abspath(__file__))
