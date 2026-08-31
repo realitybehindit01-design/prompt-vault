@@ -998,7 +998,7 @@ function renderFoldersView() {
             <button onclick="filterByFolder(${parent.id})" class="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-sm">
               View Prompts
             </button>
-            <button onclick="deleteFolderPrompt(${parent.id}, '${escapeHtml(parent.name)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600" title="Delete Folder">
+            <button onclick="openDeleteFolderSafetyModal(${parent.id}, '${escapeHtml(parent.name)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600" title="Delete Folder">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           </div>
@@ -1028,7 +1028,7 @@ function renderFoldersView() {
                     <button onclick="filterByFolder(${sub.id})" class="p-1 text-brand-600 hover:text-brand-500" title="View Prompts">
                       <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="deleteFolderPrompt(${sub.id}, '${escapeHtml(sub.name)}')" class="p-1 text-slate-400 hover:text-red-500" title="Delete">
+                    <button onclick="openDeleteFolderSafetyModal(${sub.id}, '${escapeHtml(sub.name)}')" class="p-1 text-slate-400 hover:text-red-500" title="Delete">
                       <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
                   </div>
@@ -1114,10 +1114,26 @@ function openEditFolderModal(folderId) {
   const f = state.folders.find(item => item.id === folderId);
   if (!f) return;
 
-  document.getElementById('folder-modal-title').textContent = 'Edit Folder';
+  document.getElementById('folder-modal-title').textContent = 'Rename / Edit Folder';
   document.getElementById('form-folder-id').value = f.id;
   document.getElementById('form-folder-name').value = f.name;
-  document.getElementById('form-folder-parent').value = f.parent_id || '';
+  
+  populateFolderDropdowns();
+  populateProjectDropdowns();
+
+  // Filter out the folder itself to prevent circular parenting
+  const parentSelect = document.getElementById('form-folder-parent');
+  if (parentSelect) {
+    const validParents = state.folders.filter(item => item.id !== folderId && item.parent_id !== folderId);
+    parentSelect.innerHTML = `
+      <option value="">(Top-Level Root Folder)</option>
+      ${validParents.map(item => `
+        <option value="${item.id}" ${f.parent_id == item.id ? 'selected' : ''}>${item.parent_id ? '↳ ' : ''}${escapeHtml(item.name)}</option>
+      `).join('')}
+    `;
+    parentSelect.value = f.parent_id || '';
+  }
+
   document.getElementById('form-folder-project').value = f.project_id || '';
   openModal('modal-folder-form');
 }
@@ -1138,6 +1154,7 @@ function openAddSubfolderModal(parentId) {
 
 async function handleFolderSubmit(e) {
   e.preventDefault();
+  const folderId = document.getElementById('form-folder-id').value;
   const name = document.getElementById('form-folder-name').value.trim();
   const parentId = document.getElementById('form-folder-parent').value || null;
   const projId = document.getElementById('form-folder-project').value || null;
@@ -1150,37 +1167,115 @@ async function handleFolderSubmit(e) {
     project_id: projId ? parseInt(projId) : null
   };
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const origText = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Saving...</span>';
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/folders`, {
-      method: 'POST',
+    const url = folderId ? `${API_BASE}/folders/${folderId}` : `${API_BASE}/folders`;
+    const method = folderId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).then(r => r.json());
 
     if (res.status === 'success') {
-      showToast(`Folder "${name}" created successfully!`, 'success');
+      showToast(folderId ? `Folder renamed to "${name}"!` : `Folder "${name}" created successfully!`, 'success');
       closeModal('modal-folder-form');
-      loadData();
+      await loadData();
+    } else {
+      showToast(res.detail || 'Failed to save folder', 'error');
     }
   } catch (err) {
-    state.offlineQueue.push({ type: 'folder', data: payload });
-    showToast(`Folder saved locally (Offline queue)`, 'info');
+    if (!folderId) {
+      state.offlineQueue.push({ type: 'folder', data: payload });
+      showToast(`Folder saved locally (Offline queue)`, 'info');
+    } else {
+      showToast(`Failed to update folder. Please try again.`, 'error');
+    }
     closeModal('modal-folder-form');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origText;
+    }
   }
 }
 
-async function deleteFolderPrompt(folderId, name) {
-  const confirmDel = confirm(`Delete folder "${name}"? Contained prompts will be safely moved to Root.`);
-  if (!confirmDel) return;
+// Folder Delete Safety Functions
+function openDeleteFolderSafetyModal(folderId, name) {
+  const f = state.folders.find(item => item.id === folderId);
+  if (!f) return;
+
+  state.pendingDeleteFolderId = folderId;
+  state.pendingDeleteFolderName = name || f.name;
+
+  const count = f.prompt_count || 0;
+  document.getElementById('del-folder-modal-title').textContent = `Delete "${f.name}"?`;
+  document.getElementById('del-folder-prompt-count').textContent = count;
+
+  const targetSelect = document.getElementById('del-folder-target-select');
+  const otherFolders = state.folders.filter(item => item.id !== folderId && item.parent_id !== folderId);
+  
+  if (targetSelect) {
+    if (otherFolders.length > 0) {
+      targetSelect.innerHTML = otherFolders.map(item => `
+        <option value="${item.id}">${item.parent_id ? '↳ ' : ''}${escapeHtml(item.name)}</option>
+      `).join('');
+      const moveRadio = document.getElementById('radio-del-folder-move');
+      if (moveRadio) moveRadio.disabled = false;
+    } else {
+      targetSelect.innerHTML = '<option value="">(No other folders available)</option>';
+      const moveRadio = document.getElementById('radio-del-folder-move');
+      if (moveRadio) moveRadio.disabled = true;
+      const uncatRadio = document.querySelector('input[name="folder-delete-action"][value="uncategorize"]');
+      if (uncatRadio) uncatRadio.checked = true;
+    }
+  }
+
+  openModal('modal-delete-folder-safety');
+}
+
+async function executeDeleteFolderSafety() {
+  if (!state.pendingDeleteFolderId) return;
+
+  const action = document.querySelector('input[name="folder-delete-action"]:checked')?.value || 'uncategorize';
+  const targetSelect = document.getElementById('del-folder-target-select');
+  const targetFolderId = action === 'move' ? (targetSelect?.value || null) : null;
+
+  const btn = document.getElementById('btn-confirm-delete-folder');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>Deleting...</span>';
+  }
 
   try {
-    const res = await fetch(`${API_BASE}/folders/${folderId}`, { method: 'DELETE' }).then(r => r.json());
+    let url = `${API_BASE}/folders/${state.pendingDeleteFolderId}?prompt_action=${action}`;
+    if (targetFolderId) url += `&target_folder_id=${targetFolderId}`;
+
+    const res = await fetch(url, { method: 'DELETE' }).then(r => r.json());
     if (res.status === 'success') {
-      showToast(`Folder "${name}" deleted`, 'success');
-      loadData();
+      showToast(`Folder "${state.pendingDeleteFolderName}" deleted successfully`, 'success');
+      closeModal('modal-delete-folder-safety');
+      state.pendingDeleteFolderId = null;
+      state.pendingDeleteFolderName = null;
+      await loadData();
+    } else {
+      showToast(res.detail || 'Failed to delete folder', 'error');
     }
   } catch (err) {
     showToast('Failed to delete folder', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
   }
 }
 
@@ -1600,6 +1695,13 @@ async function executeMovePrompt() {
   const folderId = document.getElementById('move-folder-select').value || null;
   const projectId = document.getElementById('move-project-select').value || null;
 
+  const btn = document.getElementById('btn-confirm-move-prompt');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>Moving...</span>';
+  }
+
   try {
     const res = await fetch(`${API_BASE}/prompts/${state.movingPromptId}/move`, {
       method: 'POST',
@@ -1611,12 +1713,28 @@ async function executeMovePrompt() {
     }).then(r => r.json());
 
     if (res.status === 'success') {
-      showToast('Prompt moved successfully!', 'success');
+      const pIdx = state.prompts.findIndex(p => p.id === state.movingPromptId);
+      if (pIdx !== -1 && res.data) {
+        state.prompts[pIdx] = res.data;
+      }
+      
+      const targetFolder = state.folders.find(f => f.id == folderId);
+      const destName = targetFolder ? targetFolder.name : 'Root';
+      showToast(`Prompt moved to "${destName}"!`, 'success');
       closeModal('modal-move-prompt');
-      loadData();
+      state.movingPromptId = null;
+      renderCurrentTab();
+      await loadData();
+    } else {
+      showToast(res.detail || 'Failed to move prompt', 'error');
     }
   } catch (err) {
     showToast('Failed to move prompt', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
   }
 }
 
