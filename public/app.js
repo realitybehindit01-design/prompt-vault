@@ -1,4 +1,20 @@
-// PromptVault Pro Enterprise - Robust Client Architecture & Offline Synchronization
+// Default Initial Categories
+const DEFAULT_CATEGORIES = [
+  { name: 'General', icon: 'folder', color: 'indigo' },
+  { name: 'Marketing', icon: 'trending-up', color: 'purple' },
+  { name: 'SEO', icon: 'search', color: 'amber' },
+  { name: 'Social Media', icon: 'share-2', color: 'blue' },
+  { name: 'Graphic Design', icon: 'palette', color: 'pink' },
+  { name: 'Video Editing', icon: 'video', color: 'red' },
+  { name: 'Image Generation', icon: 'image', color: 'rose' },
+  { name: 'Video Generation', icon: 'film', color: 'orange' },
+  { name: 'Copywriting', icon: 'pen-tool', color: 'emerald' },
+  { name: 'Business', icon: 'briefcase', color: 'indigo' },
+  { name: 'Research', icon: 'book-open', color: 'cyan' },
+  { name: 'Programming', icon: 'code-2', color: 'blue' },
+  { name: 'Fiverr', icon: 'dollar-sign', color: 'emerald' },
+  { name: 'Personal', icon: 'user', color: 'violet' }
+];
 
 // Application State
 const state = {
@@ -6,7 +22,7 @@ const state = {
   prompts: [],
   folders: [],
   projects: [],
-  categories: [],
+  categories: [...DEFAULT_CATEGORIES],
   activeCategory: 'all',
   activeFolderId: null,
   activeProjectId: null,
@@ -241,32 +257,36 @@ function setupEventListeners() {
 }
 
 // ==================== DATA LOADING ====================
-
 async function loadData() {
   updateSyncBadge('syncing');
   try {
     const [promptsRes, foldersRes, projectsRes, catsRes, statsRes] = await Promise.all([
-      fetch(`${API_BASE}/prompts`).then(r => r.json()),
-      fetch(`${API_BASE}/folders`).then(r => r.json()),
-      fetch(`${API_BASE}/projects`).then(r => r.json()),
-      fetch(`${API_BASE}/categories`).then(r => r.json()),
-      fetch(`${API_BASE}/stats`).then(r => r.json())
+      fetch(`${API_BASE}/prompts`).then(r => r.json()).catch(() => ({ status: 'error', data: [] })),
+      fetch(`${API_BASE}/folders`).then(r => r.json()).catch(() => ({ status: 'error', data: [] })),
+      fetch(`${API_BASE}/projects`).then(r => r.json()).catch(() => ({ status: 'error', data: [] })),
+      fetch(`${API_BASE}/categories`).then(r => r.json()).catch(() => ({ status: 'error', data: [] })),
+      fetch(`${API_BASE}/stats`).then(r => r.json()).catch(() => ({ status: 'error', data: {} }))
     ]);
 
-    if (promptsRes.status === 'success') {
+    if (promptsRes && promptsRes.status === 'success' && Array.isArray(promptsRes.data)) {
       state.prompts = promptsRes.data;
       saveToIndexedDB('prompts', state.prompts);
     }
-    if (foldersRes.status === 'success') {
+    if (foldersRes && foldersRes.status === 'success' && Array.isArray(foldersRes.data)) {
       state.folders = foldersRes.data;
       saveToIndexedDB('folders', state.folders);
     }
-    if (projectsRes.status === 'success') {
+    if (projectsRes && projectsRes.status === 'success' && Array.isArray(projectsRes.data)) {
       state.projects = projectsRes.data;
       saveToIndexedDB('projects', state.projects);
     }
-    if (catsRes.status === 'success') state.categories = catsRes.data;
-    if (statsRes.status === 'success') updateStatsDisplay(statsRes);
+    if (catsRes && catsRes.status === 'success' && Array.isArray(catsRes.data) && catsRes.data.length > 0) {
+      state.categories = catsRes.data;
+    } else if (!state.categories || state.categories.length === 0) {
+      state.categories = [...DEFAULT_CATEGORIES];
+    }
+
+    if (statsRes && statsRes.status === 'success') updateStatsDisplay(statsRes);
 
     populateFolderDropdowns();
     populateProjectDropdowns();
@@ -276,39 +296,39 @@ async function loadData() {
   } catch (err) {
     console.error('Failed to load data:', err);
     updateSyncBadge('offline');
+    if (!state.categories || state.categories.length === 0) {
+      state.categories = [...DEFAULT_CATEGORIES];
+    }
+    populateFolderDropdowns();
+    populateProjectDropdowns();
+    populateCategoryDropdowns();
     loadLocalCachedData();
   }
 }
 
 function updateStatsDisplay(stats) {
   const total = stats.total_prompts || 0;
-  const foldersCount = stats.total_folders || 0;
-  const projectsCount = stats.total_projects || 0;
-  const favs = stats.total_favorites || 0;
   const copies = stats.total_copies || 0;
+  const favs = stats.total_favorites || 0;
 
-  const topTotal = document.getElementById('top-badge-total');
+  const elTotal = document.getElementById('stat-total-prompts');
+  const elCopies = document.getElementById('stat-total-copies');
+  const elFavs = document.getElementById('stat-total-favorites');
+
+  if (elTotal) elTotal.textContent = total;
+  if (elCopies) elCopies.textContent = copies;
+  if (elFavs) elFavs.textContent = favs;
+
+  const topPrompts = document.getElementById('top-badge-prompts');
   const topFolders = document.getElementById('top-badge-folders');
   const topProjects = document.getElementById('top-badge-projects');
 
-  if (topTotal) topTotal.textContent = total;
-  if (topFolders) topFolders.textContent = foldersCount;
-  if (topProjects) topProjects.textContent = projectsCount;
-
-  const homeTotal = document.getElementById('home-stat-total');
-  const homeFolders = document.getElementById('home-stat-folders');
-  const homeProjects = document.getElementById('home-stat-projects');
-  const homeFavs = document.getElementById('home-stat-favs');
-  const homeCopies = document.getElementById('home-stat-copies');
-
-  if (homeTotal) homeTotal.textContent = total;
-  if (homeFolders) homeFolders.textContent = foldersCount;
-  if (homeProjects) homeProjects.textContent = projectsCount;
-  if (homeFavs) homeFavs.textContent = favs;
-  if (homeCopies) homeCopies.textContent = copies;
+  if (topPrompts) topPrompts.textContent = total;
+  if (topFolders) topFolders.textContent = state.folders.length;
+  if (topProjects) topProjects.textContent = state.projects.length;
 }
 
-// Populate Dropdown Selects
+// Dropdown Populators
 function populateFolderDropdowns() {
   const quickFolder = document.getElementById('quick-folder');
   const formFolder = document.getElementById('form-folder');
@@ -370,7 +390,9 @@ function populateCategoryDropdowns() {
   const formCat = document.getElementById('form-category');
   const quickCat = document.getElementById('quick-category');
 
-  const options = state.categories.map(c => `
+  const cats = (state.categories && state.categories.length > 0) ? state.categories : DEFAULT_CATEGORIES;
+
+  const options = cats.map(c => `
     <option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>
   `).join('');
 
