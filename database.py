@@ -7,6 +7,17 @@ from typing import List, Dict, Any, Optional
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.db")
 
+# Vercel Serverless compatibility: use writable /tmp if in serverless environment
+if os.environ.get("VERCEL") or (os.path.exists(DB_FILE) and not os.access(DB_FILE, os.W_OK)):
+    import shutil
+    tmp_db = "/tmp/prompts.db"
+    if not os.path.exists(tmp_db) and os.path.exists(DB_FILE):
+        try:
+            shutil.copy(DB_FILE, tmp_db)
+        except Exception:
+            pass
+    DB_FILE = tmp_db
+
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
