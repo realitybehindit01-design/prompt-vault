@@ -67,43 +67,43 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs (Desktop) -->
-      <nav class="hidden lg:flex items-center gap-1 bg-slate-100 dark:bg-slate-800/70 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 text-xs font-semibold">
-        <button id="nav-tab-home" onclick="setActiveTab('home')" class="px-3.5 py-1.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs flex items-center gap-1.5">
+      <!-- Navigation Tabs (Large Desktop) -->
+      <nav class="hidden xl:flex items-center gap-1 bg-slate-100 dark:bg-slate-800/70 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 text-xs font-semibold flex-shrink-0">
+        <button id="nav-tab-home" onclick="setActiveTab('home')" class="px-3 py-1.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-xs flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="home" class="w-3.5 h-3.5"></i>
           <span>Home</span>
         </button>
-        <button id="nav-tab-prompts" onclick="setActiveTab('prompts')" class="px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+        <button id="nav-tab-prompts" onclick="setActiveTab('prompts')" class="px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
           <span>All Prompts</span>
           <span id="top-badge-total" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800">0</span>
         </button>
-        <button id="nav-tab-folders" onclick="setActiveTab('folders')" class="px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+        <button id="nav-tab-folders" onclick="setActiveTab('folders')" class="px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="folder-tree" class="w-3.5 h-3.5 text-amber-500"></i>
-          <span>Folders & Subfolders</span>
+          <span>Folders</span>
           <span id="top-badge-folders" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800">0</span>
         </button>
-        <button id="nav-tab-projects" onclick="setActiveTab('projects')" class="px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+        <button id="nav-tab-projects" onclick="setActiveTab('projects')" class="px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="briefcase" class="w-3.5 h-3.5 text-indigo-500"></i>
           <span>Projects</span>
           <span id="top-badge-projects" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800">0</span>
         </button>
-        <button id="nav-tab-favorites" onclick="setActiveTab('favorites')" class="px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+        <button id="nav-tab-favorites" onclick="setActiveTab('favorites')" class="px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
           <span>Favorites</span>
         </button>
-        <button id="nav-tab-categories" onclick="setActiveTab('categories')" class="px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5">
+        <button id="nav-tab-categories" onclick="setActiveTab('categories')" class="px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="tag" class="w-3.5 h-3.5 text-emerald-500"></i>
           <span>Categories</span>
         </button>
-        <button id="nav-tab-tutorials" onclick="setActiveTab('tutorials')" class="px-3 py-1.5 rounded-xl transition-all text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-1.5">
+        <button id="nav-tab-tutorials" onclick="setActiveTab('tutorials')" class="px-3 py-1.5 rounded-xl transition-all text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
           <span>Tutorials</span>
         </button>
       </nav>
 
       <!-- Global Search (Desktop) -->
-      <div class="flex-1 max-w-xs sm:max-w-sm mx-1 hidden sm:block">
+      <div class="flex-1 max-w-xs mx-1 hidden md:block">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <i data-lucide="search" class="w-3.5 h-3.5"></i>
@@ -111,7 +111,7 @@
           <input 
             type="text" 
             id="search-input" 
-            placeholder="Search prompts, folders, tags... (Ctrl + K)" 
+            placeholder="Search prompts, folders... (Ctrl + K)" 
             class="w-full pl-8.5 pr-8 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-slate-900 dark:text-slate-100 placeholder-slate-400 font-medium"
           >
           <button id="clear-search-btn" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -183,8 +183,40 @@
     </div>
   </header>
 
+  <!-- Tablet / Small Screen Navigation Tab Strip -->
+  <div class="xl:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-3 py-2 overflow-x-auto flex items-center gap-1.5 no-scrollbar flex-nowrap">
+    <button onclick="setActiveTab('home')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="home" class="w-3.5 h-3.5"></i>
+      <span>Home</span>
+    </button>
+    <button onclick="setActiveTab('prompts')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+      <span>All Prompts</span>
+    </button>
+    <button onclick="setActiveTab('folders')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="folder-tree" class="w-3.5 h-3.5"></i>
+      <span>Folders</span>
+    </button>
+    <button onclick="setActiveTab('projects')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
+      <span>Projects</span>
+    </button>
+    <button onclick="setActiveTab('favorites')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-amber-500 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-500"></i>
+      <span>Favorites</span>
+    </button>
+    <button onclick="setActiveTab('categories')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+      <span>Categories</span>
+    </button>
+    <button onclick="setActiveTab('tutorials')" class="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-xs font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+      <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+      <span>Tutorials</span>
+    </button>
+  </div>
+
   <!-- Mobile Search Bar Strip -->
-  <div class="sm:hidden px-3 pt-3 pb-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs border-b border-slate-200/60 dark:border-slate-800/60">
+  <div class="md:hidden px-3 pt-2 pb-1.5 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs border-b border-slate-200/60 dark:border-slate-800/60">
     <div class="relative">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
         <i data-lucide="search" class="w-4 h-4"></i>
@@ -1578,6 +1610,6 @@
   </nav>
 
   <!-- Main JavaScript Logic -->
-  <script src="/app.js?v=3.5"></script>
+  <script src="/app.js?v=4.0"></script>
 </body>
 </html>
