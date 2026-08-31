@@ -5,23 +5,34 @@ import difflib
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ORIGINAL_DB = os.path.join(BASE_DIR, "prompts.db")
 
-# Vercel Serverless compatibility: use writable /tmp if in serverless environment
-if os.environ.get("VERCEL") or (os.path.exists(DB_FILE) and not os.access(DB_FILE, os.W_OK)):
+# Vercel / AWS Lambda Serverless environment: use writable /tmp
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or not os.access(BASE_DIR, os.W_OK):
     import shutil
     tmp_db = "/tmp/prompts.db"
-    if not os.path.exists(tmp_db) and os.path.exists(DB_FILE):
+    if not os.path.exists(tmp_db) and os.path.exists(ORIGINAL_DB):
         try:
-            shutil.copy(DB_FILE, tmp_db)
+            shutil.copy2(ORIGINAL_DB, tmp_db)
         except Exception:
             pass
     DB_FILE = tmp_db
+else:
+    DB_FILE = ORIGINAL_DB
 
 def get_db_connection():
+    if DB_FILE.startswith("/tmp"):
+        try:
+            os.makedirs("/tmp", exist_ok=True)
+        except Exception:
+            pass
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+    except Exception:
+        pass
     return conn
 
 def init_db():
