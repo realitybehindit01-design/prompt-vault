@@ -410,9 +410,9 @@ function setActiveTab(tab) {
     const btn = document.getElementById(`nav-tab-${t}`);
     if (btn) {
       if (t === tab) {
-        btn.className = 'px-3.5 py-1.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 font-bold shadow-xs flex items-center gap-1.5';
+        btn.className = 'px-3 py-1.5 rounded-xl transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 font-bold shadow-xs flex items-center gap-1.5 whitespace-nowrap flex-shrink-0';
       } else {
-        btn.className = 'px-3.5 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5';
+        btn.className = 'px-3 py-1.5 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 whitespace-nowrap flex-shrink-0';
       }
     }
   });
