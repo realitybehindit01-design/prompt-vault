@@ -285,8 +285,17 @@ def update_folder(folder_id: int, item: FolderUpdateRequest):
     return {"status": "success", "data": updated}
 
 @api.delete("/folders/{folder_id}")
-def delete_folder(folder_id: int):
-    success = database.delete_folder(folder_id, user_id=1)
+def delete_folder(
+    folder_id: int,
+    prompt_action: str = Query("uncategorize", enum=["uncategorize", "move", "delete"]),
+    target_folder_id: Optional[int] = Query(None)
+):
+    success = database.delete_folder(
+        folder_id=folder_id,
+        prompt_action=prompt_action,
+        target_folder_id=target_folder_id,
+        user_id=1
+    )
     if not success:
         raise HTTPException(status_code=404, detail="Folder not found")
     return {"status": "success", "message": "Folder deleted successfully"}
