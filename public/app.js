@@ -1519,6 +1519,18 @@ async function executeSavePrompt(promptId, payload) {
     if (response.ok && res.status === 'success') {
       showToast(promptId ? 'Prompt updated! New version archived.' : 'Prompt saved to vault!', 'success');
       closeModal('modal-prompt-form');
+      updateSyncBadge('synced');
+
+      if (res.data) {
+        if (promptId) {
+          const idx = state.prompts.findIndex(p => p.id === parseInt(promptId));
+          if (idx !== -1) state.prompts[idx] = res.data;
+        } else {
+          state.prompts.unshift(res.data);
+        }
+        renderCurrentTab();
+      }
+
       await loadData();
     } else {
       showToast(res.detail || res.message || 'Failed to save prompt', 'error');
@@ -1540,8 +1552,7 @@ async function executeSavePrompt(promptId, payload) {
       if (typeof saveToLocalIndexedDB === 'function') {
         saveToLocalIndexedDB('prompts', state.prompts);
       }
-      renderPrompts();
-      renderHomeRecentPrompts();
+      renderCurrentTab();
     }
 
     updateSyncBadge('offline');
