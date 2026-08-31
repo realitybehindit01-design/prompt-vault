@@ -417,6 +417,18 @@ function setActiveTab(tab) {
     }
   });
 
+  const mobTabs = ['home', 'prompts', 'folders', 'projects', 'favorites', 'categories', 'tutorials'];
+  mobTabs.forEach(t => {
+    const mobBtn = document.getElementById(`mob-tab-${t}`);
+    if (mobBtn) {
+      if (t === tab) {
+        mobBtn.className = 'flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-brand-600 dark:text-brand-400 font-bold transition-all text-[10px] scale-105';
+      } else {
+        mobBtn.className = 'flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium transition-all text-[10px]';
+      }
+    }
+  });
+
   const views = {
     home: document.getElementById('view-tab-home'),
     prompts: document.getElementById('view-tab-prompts'),
