@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PromptVault Pro | Enterprise AI Prompt Studio & Folder Platform</title>
+  <title>ZUBAIR ANSARI PROMPTS | Enterprise AI Prompt Studio & Vault</title>
   
   <!-- PWA Manifest & Meta -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#4f46e5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PromptVault">
+  <meta name="apple-mobile-web-app-title" content="ZUBAIR ANSARI PROMPTS">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,24 +45,24 @@
   <!-- Custom Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200 selection:bg-brand-500 selection:text-white overflow-x-hidden w-full">
 
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
       
       <!-- Brand Logo -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2.5 cursor-pointer" onclick="setActiveTab('home')">
-          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 transform hover:scale-105 transition-transform">
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center gap-2 cursor-pointer min-w-0" onclick="setActiveTab('home')">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 flex-shrink-0">
+            <i data-lucide="sparkles" class="w-4 h-4 sm:w-5 sm:h-5"></i>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-brand-600 via-indigo-500 to-purple-500 dark:from-brand-400 dark:to-indigo-300 bg-clip-text text-transparent">PromptVault</span>
-              <span class="text-[10px] font-bold px-1.5 py-0.5 bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 rounded-md">ENTERPRISE</span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="font-extrabold text-sm sm:text-base tracking-tight bg-gradient-to-r from-brand-600 via-indigo-500 to-purple-500 dark:from-brand-400 dark:to-indigo-300 bg-clip-text text-transparent truncate">ZUBAIR ANSARI PROMPTS</span>
+              <span class="hidden md:inline-block text-[9px] font-bold px-1.5 py-0.2 bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 rounded">PRO</span>
             </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Prompt & Folder Studio</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">AI Prompt & Folder Studio</p>
           </div>
         </div>
       </div>
@@ -102,7 +102,7 @@
         </button>
       </nav>
 
-      <!-- Global Search -->
+      <!-- Global Search (Desktop) -->
       <div class="flex-1 max-w-xs sm:max-w-sm mx-1 hidden sm:block">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -111,7 +111,7 @@
           <input 
             type="text" 
             id="search-input" 
-            placeholder="Search prompts, folders, projects, tags... (Ctrl + K)" 
+            placeholder="Search prompts, folders, tags... (Ctrl + K)" 
             class="w-full pl-8.5 pr-8 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-slate-900 dark:text-slate-100 placeholder-slate-400 font-medium"
           >
           <button id="clear-search-btn" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -121,41 +121,40 @@
       </div>
 
       <!-- Header Actions & Sync Status -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         
         <!-- Live Sync Status Badge -->
-        <div id="sync-status-badge" class="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60" title="Data is synchronized with backend and cached offline">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <div id="sync-status-badge" class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
+          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span id="sync-status-text">Synced</span>
         </div>
 
-        <!-- + New Folder Button (NEW) -->
+        <!-- + New Folder Button -->
         <button 
           onclick="openAddFolderModal()" 
-          class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 transition-all transform active:scale-95"
+          class="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 transition-all transform active:scale-95"
           title="Create New Folder or Nested Subfolder"
         >
-          <i data-lucide="folder-plus" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">New Folder</span>
-          <span class="sm:hidden">+Folder</span>
+          <i data-lucide="folder-plus" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <span>+Folder</span>
         </button>
 
         <!-- + New Prompt Button -->
         <button 
           onclick="openAddPromptModal()" 
-          class="flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 hover:shadow-brand-500/35 transition-all transform active:scale-95"
+          class="flex items-center gap-1 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 hover:shadow-brand-500/35 transition-all transform active:scale-95"
         >
-          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
           <span class="hidden sm:inline">New Prompt</span>
           <span class="sm:hidden">Add</span>
         </button>
 
         <!-- Download APK Button -->
         <a 
-          href="/download/promptvault.apk"
-          download="promptvault-v2.5.apk"
+          href="/download/promptvault.apk" 
+          download="zubair-prompts-v2.5.apk"
           title="Download Android APK (.apk)" 
-          class="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 transition-colors flex items-center gap-1 text-xs font-semibold"
+          class="hidden md:flex p-1.5 sm:p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 transition-colors items-center gap-1 text-xs font-semibold"
         >
           <i data-lucide="smartphone" class="w-4 h-4"></i>
           <span class="hidden xl:inline">APK</span>
@@ -165,7 +164,7 @@
         <button 
           onclick="openBackupModal()" 
           title="Backup & Restore (JSON / CSV)" 
-          class="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
+          class="hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
         >
           <i data-lucide="hard-drive" class="w-4 h-4"></i>
         </button>
@@ -174,7 +173,7 @@
         <button 
           onclick="toggleTheme()" 
           title="Toggle Dark / Light Theme" 
-          class="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
+          class="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
         >
           <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 hidden"></i>
           <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4"></i>
