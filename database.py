@@ -12,11 +12,14 @@ ORIGINAL_DB = os.path.join(BASE_DIR, "prompts.db")
 if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or not os.access(BASE_DIR, os.W_OK):
     import shutil
     tmp_db = "/tmp/prompts.db"
-    if not os.path.exists(tmp_db) and os.path.exists(ORIGINAL_DB):
+    if not os.path.exists(tmp_db):
         try:
-            shutil.copy2(ORIGINAL_DB, tmp_db)
-        except Exception:
-            pass
+            if os.path.exists(ORIGINAL_DB):
+                shutil.copyfile(ORIGINAL_DB, tmp_db)
+            if os.path.exists(tmp_db):
+                os.chmod(tmp_db, 0o666)
+        except Exception as e:
+            print("[Database Warning] Could not copy DB to /tmp:", e)
     DB_FILE = tmp_db
 else:
     DB_FILE = ORIGINAL_DB
