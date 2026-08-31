@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  promptvault:
+    build: .
+    container_name: promptvault-pro
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./prompts.db:/app/prompts.db
+    environment:
+      - PORT=8000
+    restart: unless-stopped
