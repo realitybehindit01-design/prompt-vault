@@ -122,3 +122,31 @@ body {
 .expandable-content {
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
+
+/* Mobile Optimization & Touch Enhancements */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 15px !important;
+  }
+  
+  #toast-container {
+    bottom: 5.5rem;
+    left: 1rem;
+    right: 1rem;
+    align-items: center;
+  }
+  
+  .toast {
+    width: 100%;
+    max-width: 24rem;
+  }
+  
+  /* Touch target helpers */
+  button, a {
+    touch-action: manipulation;
+  }
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
