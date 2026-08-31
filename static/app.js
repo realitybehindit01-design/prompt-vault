@@ -1463,6 +1463,10 @@ function openEditPromptModal(promptId) {
   const p = state.prompts.find(item => item.id === promptId);
   if (!p) return;
 
+  populateFolderDropdowns();
+  populateProjectDropdowns();
+  populateCategoryDropdowns();
+
   document.getElementById('form-modal-title').textContent = 'Edit Prompt (Auto Version Snapshot)';
   document.getElementById('form-prompt-id').value = p.id;
   document.getElementById('form-title').value = p.title || '';
@@ -1476,7 +1480,7 @@ function openEditPromptModal(promptId) {
   document.getElementById('form-notes').value = p.notes || '';
   document.getElementById('form-is-favorite').checked = p.is_favorite === 1;
 
-  detectVariablesInForm(p.prompt_text);
+  detectVariablesInForm(p.prompt_text || '');
   openModal('modal-prompt-form');
 }
 
@@ -1744,29 +1748,55 @@ async function copyPromptCard(promptId, buttonEl) {
   const p = state.prompts.find(item => item.id === promptId);
   if (!p) return;
 
-  await navigator.clipboard.writeText(p.prompt_text);
-  
-  const originalHtml = buttonEl.innerHTML;
-  buttonEl.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-white"></i><span>Copied!</span>';
-  buttonEl.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
-  buttonEl.classList.remove('bg-brand-600', 'hover:bg-brand-500');
-  lucide.createIcons();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(p.prompt_text);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = p.prompt_text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+  } catch (err) {
+    const textarea = document.createElement('textarea');
+    textarea.value = p.prompt_text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  const originalHtml = buttonEl ? buttonEl.innerHTML : '';
+  if (buttonEl) {
+    buttonEl.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-white"></i><span>Copied!</span>';
+    buttonEl.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+    buttonEl.classList.remove('bg-brand-600', 'hover:bg-brand-500');
+    if (window.lucide) lucide.createIcons();
+  }
 
   showToast(`Copied: "${p.title}"`, 'success');
 
   try {
     const res = await fetch(`${API_BASE}/prompts/${promptId}/use`, { method: 'POST' }).then(r => r.json());
-    if (res.status === 'success') {
+    if (res.status === 'success' && res.data) {
       p.usage_count = res.data.usage_count;
     }
   } catch (e) {}
 
-  setTimeout(() => {
-    buttonEl.innerHTML = originalHtml;
-    buttonEl.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
-    buttonEl.classList.add('bg-brand-600', 'hover:bg-brand-500');
-    lucide.createIcons();
-  }, 1800);
+  if (buttonEl) {
+    setTimeout(() => {
+      buttonEl.innerHTML = originalHtml;
+      buttonEl.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+      buttonEl.classList.add('bg-brand-600', 'hover:bg-brand-500');
+      if (window.lucide) lucide.createIcons();
+    }, 1800);
+  }
 }
 
 // ==================== VERSION HISTORY & RESTORE ====================
@@ -2111,17 +2141,24 @@ function openModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
     modal.classList.remove('hidden');
-    lucide.createIcons();
+    modal.classList.add('flex');
+    if (window.lucide) lucide.createIcons();
   }
 }
 
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 }
 
 function closeAllModals() {
-  document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden'));
+  document.querySelectorAll('[id^="modal-"]').forEach(m => {
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+  });
 }
 
 // Toast Notifications
